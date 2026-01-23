@@ -1,3 +1,0 @@
-每一步的Command，就是几类，一个cmdMove，就是一步走过去的，另一个就是cmdWalkPause，就是走一步后要等某个特定消息后才算走过去的，还有一个就是cmdCrossRiver，过江过河。
-然后cmdRunto把这3个command组织起来，逐个调用
-cmdRunto的核心，就是对每一步用循环操作，直到满足条件为止。

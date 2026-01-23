@@ -1,12 +1,16 @@
 # 修改后的完整代码
 import asyncio
 from pymud import IConfig, GMCPTrigger, Trigger
+from sympy import true
+
+from fullme_ui import open_fullme_window, close_fullme_window, is_fullme_window_open
 
 """
 GMCP频道：
 北侠命令: tune gmcp、
         set raw_data_format 2  设置 hp * 输出格式
         tune gmcp format raw/pretty 设置中/英文格式
+        〔GMCP〕GMCP.Combat: [{"jing_wound":0,"qi_damage":97,"eff_jing_pct":100,"qi_wound":96,"eff_qi_pct":81,"jing_pct":100,"jing_damage":0,"name":"流氓头","qi_pct":55,"id":"liumang tou#4336421"}]
 """
 
 
@@ -14,7 +18,7 @@ class GMCPChannel(IConfig):
     def __init__(self, session, *args, **kwargs):
         self.session = session
         self.ws = session.application.get_globals("ws_client")
-        
+
         # 初始化profile，确保它是一个字典
         self.profile = self.session.getVariable("char_profile")
         if self.profile is None:
@@ -23,41 +27,50 @@ class GMCPChannel(IConfig):
 
         self._gmcp_status = [
             GMCPTrigger(
-                self.session, "GMCP.Status", group="sys", onSuccess=self.on_all
+                self.session, "GMCP.Status", group="sys", onSuccess=self.on_all, keepEval=True
             ),
             # GMCPTrigger(
-            #     self.session, "GMCP.raw_hp", group="sys", onSuccess=self.on_change
+            #     self.session, "GMCP.raw_hp", group="sys", onSuccess=self.on_all, keepEval=True
             # ),
-            
-            GMCPTrigger(
-                self.session, "GMCP.Move", group="sys", onSuccess=self.on_move
-            ),
-            Trigger(self.session, r"^目前权限：\(player\)",
-                onSuccess=self.tri_init_vars, group="sys", id="tri_init_vars",keepEval=True
-            ),
-            Trigger(self.session, r"^重新连线完毕。",
-                onSuccess=self.tri_init_vars, group="sys", id="tri_init_vars2",keepEval=True
-            ),
-            # Trigger(self.session, r"^http://fullme.pkuxkx.net/robot.php.+$",
-            #         id="tri_get_fullme", group="sys", onSuccess=self.tri_get_fullme,
-            #         ),
+        # 〔GMCP〕GMCP.Buff: {"is_end": "false", "name": "加力", "effect2": "躲闪+15", "last_time": 120,
+        #                   "effect1": "攻击命中+15"}
+        #     GMCPTrigger(
+        #         self.session, "GMCP.Buff", group="sys", onSuccess=self.on_buff
+        #     ),
+            # GMCPTrigger(
+            #     self.session, "GMCP.Move", group="sys", onSuccess=self.on_move
+            # ),
+            Trigger(self.session, r"^[> ]?目前权限：\(player\)",
+                    onSuccess=self.tri_init_vars, group="sys", keepEval=True
+                    ),
+            Trigger(self.session, r"^[> ]?重新连线完毕。",
+                    onSuccess=self.tri_init_vars, group="sys", keepEval=True
+                    ),
+            Trigger(self.session, r"^http://fullme.pkuxkx.net/robot.php.+$",
+                    group="sys", onSuccess=self.tri_get_fullme,
+                    ),
             Trigger(
-                self.session, r"^你突然感到精神一振，浑身似乎又充满了力量！",
-                id="tri_over_fullme", group="sys", onSuccess=self.tri_over_fullme
+                self.session, r"^[> ]?你突然感到精神一振，浑身似乎又充满了力量！$",
+                group="sys", onSuccess=self.tri_over_fullme, keepEval=True
             ),
             Trigger(
-                self.session, r"^你刚刚用过这个命令不久，还要(\d+)分钟(\d+)秒才能再用。$",
-                id="tri_restore_fullme", group="sys", onSuccess=self.tri_restore_fullme
+                self.session, r"^[> ]?太遗憾了。$",
+                group="sys", onSuccess=self.tri_over_fullme, keepEval=true
+            ),
+            Trigger(
+                self.session, r"^[> ]?你刚刚用过这个命令不久，还要(\d+)分钟(\d+)秒才能再用。$",
+                group="sys", onSuccess=self.tri_restore_fullme
             ),
             Trigger(
                 self.session, r"^[> ]?请注意，你的活跃度已经偏低.+",
-                id="tri_warnning_fullme", group="sys", onSuccess=self.tri_warnning_fullme
+                group="sys", onSuccess=self.tri_warnning_fullme
             ),
-            #│ 【真气】 0       / 0
+            # │ 【真气】 0       / 0
             Trigger(
                 self.session, r"^\s*│\s?【真气】\s?(\d+)\s+/\s?(\d+)\s+\[.*│$",
-                id="tri_vigour_qi", group="sys", onSuccess=self.tri_vigour_qi
+                group="sys", onSuccess=self.tri_vigour_qi
             ),
+            # > 〔GMCP〕GMCP.Buff: {"is_end": "true", "name": "加力","terminated": "completed"}
         ]
 
     # 获取真气值
@@ -66,29 +79,50 @@ class GMCPChannel(IConfig):
         self.session.vars['char_profile']['vigour/qi'] = int(current)
         self.session.vars['char_profile']['vigour/max_qi'] = int(max)
 
+    def tri_open_fullme(self):
+        self.session.exec('fullme')
+
     # fullme_time字段校正
     def tri_restore_fullme(self, id, line, wildcards):
         minutes, seconds = wildcards
         self.session.vars['char_profile']['fullme_time'] = int(minutes) * 60 + int(seconds)
+
     # fullme警告，该输命令了
     def tri_warnning_fullme(self, id, line, wildcards):
         self.session.vars['char_profile']['fullme_time'] = 0
+
     # fullmeCD结束
     def tri_over_fullme(self, id, line, wildcards):
         self.session.vars["char_profile"]['fullme_time'] = 900
-        pass
+        self.tri_open_fullme()
+        # 关闭Fullme验证码窗口
+        try:
+            if is_fullme_window_open():
+                close_fullme_window()
+        except Exception as e:
+            self.session.error(f"关闭Fullme窗口时出错: {e}")
 
+    # fullme获取url
+    def tri_get_fullme(self, id, line, wildcards):
+        # 调用fullme_ui模块打开验证码窗口
+        try:
+            # 使用获取到的验证码URL打开窗口
+            open_fullme_window(line)
+            # self.session.info(f"Fullme验证码窗口已打开: {line}")
+        except ImportError as e:
+            self.session.error(f"导入fullme_ui模块失败: {e}")
+        except Exception as e:
+            self.session.error(f"打开Fullme窗口失败: {e}")
 
     def on_all(self, id, line, wildcards):
         # 确保profile是字典
         # if self.profile is None:
         #     self.profile = {}
         #     self.session.setVariable("char_profile", self.profile)
-            
+
         for key, value in wildcards.items():
             self.profile[key] = value
         self.session.setVariable("char_profile", self.profile)
-
 
     def on_change(self, id, line, wildcards):
         '''
@@ -103,7 +137,8 @@ class GMCPChannel(IConfig):
         #     self.profile[key] = value
         # # 更新session中的变量
         # self.session.setVariable("char_profile", self.profile)
-        self.session.vars("char_profile").update(wildcards[0])
+        # self.session.vars["char_profile"].update(wildcards[0])
+        pass
 
     def on_move(self, id, line, wildcards):
         '''
@@ -119,14 +154,31 @@ class GMCPChannel(IConfig):
             self.session.setVariable("move", '移动失败')
         pass
 
+    def on_buff(self, id, line, wildcards):
+        '''
+        〔GMCP〕GMCP.Buff: {"is_end": "false", "name": "加力", "effect2": "躲闪+15", "last_time": 120,
+                          "effect1": "攻击命中+15"}
+        '''
+        info = wildcards[0]
+        if info["is_end"] == "true":
+            # 删除buff字段
+            del self.session.vars['char_profile']["buff"]
+        else:
+            self.session.vars['char_profile']["buff"] = {"last_time": info["last_time"]}
+            effect = []
+            effect.append(f'命中+{info["effect1"].split("+")[1]}')
+            effect.append(f'躲闪+{info["effect2"].split("+")[1]}')
+            self.session.vars['char_profile']["effect"] = effect
+        pass
+
     def tri_init_vars(self, id, line, wildcards):
         self.initStatus()
         pass
-    
+
     def initStatus(self):
         # 创建异步任务，2秒后发送"score -family"命令
         asyncio.create_task(self.delayed_score())
-    
+
     async def delayed_score(self):
         """异步延迟2秒后发送命令"""
         try:

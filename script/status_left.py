@@ -1,8 +1,11 @@
 import functools
 import time
+
+from prompt_toolkit import ANSI
+from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 from pkg_confirm import confirm
-import os
+from pymud.settings import Settings
 
 
 class Configuration:
@@ -28,11 +31,11 @@ class Configuration:
     def _get_time_color(self, remaining_time):
         """根据剩余时间获取颜色"""
         if remaining_time > 100:
-            return "fg:green"
+            return Settings.styles['green']
         elif remaining_time > 50:
-            return "fg:yellow"
+            return Settings.styles['yellow']
         else:
-            return "fg:red"
+            return Settings.styles['red']
 
     def _calculate_remaining_time(self, fullme_duration):
         """计算剩余时间"""
@@ -68,18 +71,18 @@ class Configuration:
         }
         emoji = emoji_mapping.get(label, "")
 
-        formatted_list.append(("fg:green", f" {emoji}{label}："))
+        formatted_list.append((Settings.styles['green'], f" {emoji}{label}："))
         formatted_list.extend(progress_styles["gradient"])
         formatted_list.append(("", "\n"))
         formatted_list.append(("", "         "))
         formatted_list.append((color, f"{value}"))
-        formatted_list.append(("fg:green", " / "))
+        formatted_list.append((Settings.styles['green'], " / "))
         formatted_list.append(("fg:white", f"{max_value}"))
         formatted_list.append(("", "\n"))
 
     def opFullmeFn(self, mouse_event: MouseEvent):
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
-            self.session.info('fullme')
+            self.session.exec('fullme')
 
     async def startJobFn(self, mouse_event: MouseEvent):
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
@@ -90,6 +93,21 @@ class Configuration:
         formatted_list = list()
 
         # 头部信息
+        formatted_list.append(("", " "))
+        formatted_list.extend((to_formatted_text(ANSI(f"{self.uinfo['title']}"))))
+        formatted_list.extend([
+            ("", f" {self.uinfo['名字']}({self.uinfo['师承']})"),
+            ("", "\n"),
+            ("", "-------------------------"),
+            ("", "\n")
+        ])
+        formatted_list.extend([
+            ("", " BUFF："),
+            ("bg:ForestGreen fg:LightYellow", "临兵斗者皆阵列在前"),
+            ("", "\n"),
+            ("", "-------------------------"),
+            ("", "\n")
+        ])
         formatted_list.extend([
             ("fg:#DC143C", " BUFF：临兵斗者皆阵列在前"),
             ("", "\n"),
@@ -114,11 +132,17 @@ class Configuration:
 
         # 潜能和经验（添加表情符号）
         formatted_list.extend([
-            ("fg:green", " 💎潜能："),
-            ("fg:#00BFFF", f"{self.uinfo['potential']}"),
+            (Settings.styles['green'], " 💫潜能："),
+            ("fg:Magenta", f"{self.uinfo['potential']}"),
             ("", "\n"),
-            ("fg:green", " ⭐经验："),
-            (self.get_value_color(self.uinfo['water'], 350), f"{self.uinfo['combat_exp']}"),
+            (Settings.styles['green'], " ⭐经验："),
+            ("fg:DeepSkyBlue", f"{self.uinfo['combat_exp']}"),
+            ("", "\n"),
+            (Settings.styles['green'], " 💰存款："),
+            (Settings.styles['yellow'], f"{self.uinfo['存款']}"),
+            ("", "\n"),
+            (Settings.styles['green'], " 🙏道德："),
+            ("fg:white", f"{self.uinfo['道德']}"),
             ("", "\n"),
             ("", "-------------------------"),
             ("", "\n")
@@ -127,11 +151,11 @@ class Configuration:
         # 倒计时处理
         fullme_duration = self.uinfo.get('fullme_time', 0)
         remaining_time = self._calculate_remaining_time(fullme_duration)
-        
+
         if remaining_time > 0:
             clock_emoji = self._get_clock_emoji(remaining_time)
             time_color = self._get_time_color(remaining_time)
-            
+
             formatted_list.append(("fg:cyan", "       "))
             formatted_list.append(("fg:cyan", f"{clock_emoji} "))
             formatted_list.append((time_color, f"{int(remaining_time)}"))
@@ -147,16 +171,6 @@ class Configuration:
             formatted_list.append(("", "\n"))
             self.session.vars['char_profile']['fullme_time'] = 0
 
-        # 底部按钮
-        formatted_list.append(("", "\n"))
-        formatted_list.append(("", "-------------------------"))
-        formatted_list.append(("", "\n"))
-        formatted_list.append(("", "    "))
-        formatted_list.append(("bg:#76EEC6 fg:red", "|    点我    |", functools.partial(self.startJobFn)))
-        formatted_list.append(("", "\n"))
-        formatted_list.append(("", "-------------------------"))
-        formatted_list.append(("", "\n"))
-        
         return formatted_list
 
     def progress_bar_styles(self, current, maximum=10, barlength=9):
@@ -189,7 +203,7 @@ class Configuration:
                 color = "fg:#7FFF00"
 
             else:
-                color = "fg:green"
+                color = Settings.styles['green']
             progress_bars["gradient"] = [
                 (color, "■" * filled_length),  # 使用■代替█
                 ("fg:#666666", "□" * remaining_length),  # 使用□代替░
@@ -238,4 +252,4 @@ class Configuration:
         elif percentage > 1:
             return "fg:cyan"  # 青色
         else:
-            return "fg:green"  # 绿色
+            return Settings.styles['green']  # 绿色

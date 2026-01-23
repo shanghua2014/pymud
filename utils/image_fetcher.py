@@ -17,7 +17,7 @@ class ImageFetcher:
         """确保images目录存在"""
         if not os.path.exists(self.images_dir):
             os.makedirs(self.images_dir)
-            print(f"创建目录: {self.images_dir}")
+            # print(f"创建目录: {self.images_dir}")
 
     def fetch_image(self, captcha_url, thread_id):
         """获取验证码图片"""
