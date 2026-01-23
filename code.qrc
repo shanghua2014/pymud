@@ -1,0 +1,8 @@
+<RCC>
+<qresource prefix="imgs">
+    <file>images/fullme/fullme1.jpg</file>
+    <file>images/fullme/fullme2.jpg</file>
+    <file>images/fullme/fullme3.jpg</file>
+    <file>images/fullme/fullme4.jpg</file>
+</qresource>
+</RCC>
