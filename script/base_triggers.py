@@ -51,21 +51,30 @@ class GMCPChannel(IConfig):
             ),
             Trigger(
                 self.session, r"^[> ]?请注意，你的活跃度已经偏低.+",
-                id="tri_restore_fullme2", group="sys", onSuccess=self.tri_restore_fullme2
-            )
+                id="tri_warnning_fullme", group="sys", onSuccess=self.tri_warnning_fullme
+            ),
+            #│ 【真气】 0       / 0
+            Trigger(
+                self.session, r"^\s*│\s?【真气】\s?(\d+)\s+/\s?(\d+)\s+\[.*│$",
+                id="tri_vigour_qi", group="sys", onSuccess=self.tri_vigour_qi
+            ),
         ]
 
-    # 校正fullme_time
+    # 获取真气值
+    def tri_vigour_qi(self, id, line, wildcards):
+        current, max = wildcards
+        self.session.vars['char_profile']['vigour/qi'] = int(current)
+        self.session.vars['char_profile']['vigour/max_qi'] = int(max)
+
+    # fullme_time字段校正
     def tri_restore_fullme(self, id, line, wildcards):
         minutes, seconds = wildcards
         self.session.vars['char_profile']['fullme_time'] = int(minutes) * 60 + int(seconds)
-        pass
-    def tri_restore_fullme2(self, id, line, wildcards):
+    # fullme警告，该输命令了
+    def tri_warnning_fullme(self, id, line, wildcards):
         self.session.vars['char_profile']['fullme_time'] = 0
-        pass
-
+    # fullmeCD结束
     def tri_over_fullme(self, id, line, wildcards):
-        self.session.info("你重新获得了满力状态")
         self.session.vars["char_profile"]['fullme_time'] = 900
         pass
 
@@ -124,6 +133,8 @@ class GMCPChannel(IConfig):
             await self.session.exec_async(" ")
             await asyncio.sleep(2)
             await self.session.exec_async("score")
+            await asyncio.sleep(3)
+            await self.session.exec_async("hp")
         except Exception as e:
             self.session.error(f"发送score -family命令时出错: {e}")
 

@@ -103,7 +103,7 @@ class Configuration:
             ("内力", self.uinfo['neili'], self.uinfo['max_neili']),
             ("精神", self.uinfo['jing'], self.uinfo['max_jing']),
             ("精力", self.uinfo['jingli'], self.uinfo['max_jingli']),
-            ("真气", self.uinfo['vigour/qi'], self.uinfo['vigour/yuan']),
+            ("真气", self.uinfo['vigour/qi'], self.uinfo['vigour/max_qi']),
             ("食物", self.uinfo['food'], 350),
             ("饮水", self.uinfo['water'], 350)
         ]
