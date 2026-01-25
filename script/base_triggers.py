@@ -1,7 +1,8 @@
 # 修改后的完整代码
 import asyncio
 from pymud import IConfig, GMCPTrigger, Trigger
-from sympy import true
+
+import platform
 
 from fullme_ui import open_fullme_window, close_fullme_window, is_fullme_window_open
 
@@ -55,7 +56,7 @@ class GMCPChannel(IConfig):
             ),
             Trigger(
                 self.session, r"^[> ]?太遗憾了。$",
-                group="sys", onSuccess=self.tri_over_fullme, keepEval=true
+                group="sys", onSuccess=self.tri_over_fullme, keepEval=True
             ),
             Trigger(
                 self.session, r"^[> ]?你刚刚用过这个命令不久，还要(\d+)分钟(\d+)秒才能再用。$",
@@ -104,11 +105,12 @@ class GMCPChannel(IConfig):
 
     # fullme获取url
     def tri_get_fullme(self, id, line, wildcards):
-        # 调用fullme_ui模块打开验证码窗口
+        # 只有 Windows 系统才调用 fullme_ui 模块打开验证码窗口
+        if platform.system() != "Windows":
+            return
         try:
             # 使用获取到的验证码URL打开窗口
             open_fullme_window(line)
-            # self.session.info(f"Fullme验证码窗口已打开: {line}")
         except ImportError as e:
             self.session.error(f"导入fullme_ui模块失败: {e}")
         except Exception as e:

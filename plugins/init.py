@@ -1,13 +1,6 @@
-import threading
-import multiprocessing
-import pyautogui
-import atexit
-import json
 import os
 
 from pymud import PyMudApp, Session
-from external_ui import run_external_ui_process
-from utils.websocket import connect_to_ws
 
 PLUGIN_NAME = "WebSocket客户端"
 PLUGIN_DESC = {
