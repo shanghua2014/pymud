@@ -6,7 +6,6 @@ from pymud import IConfig, GMCPTrigger, Trigger
 import platform
 
 from fullme_ui import open_fullme_window, close_fullme_window, is_fullme_window_open
-from script.map_recorder import MapRecorder
 
 """
 GMCP频道：
@@ -18,14 +17,50 @@ GMCP频道：
         ( 地痞似乎十分疲惫，看来需要好好休息了。)『地痞(damage:+97 气血:50%/91%)』
 """
 
+'''
+中央广场 - [大宋国] [城市] ㊣ ★
+    这里是扬州城的中心，一个很宽阔的广场，地面由青石铺就。一些游手好闲的人在这
+里溜达，经常有卖艺人在这里表演。中央有一棵大榕树，盘根错节，据传已有千年的树龄
+，见证了这座城市的历史。树干底部有一个很大的洞(shudong)。你可以看到北边有来自各
+地的行人来来往往，南面人声鼎沸，一派繁华景象，东边不时地传来朗朗的读书声，西边
+则见不到几个行人，一片肃静。
+    「阳春」: 一轮火红的夕阳正徘徊在西方的地平线上。
+
+    这里明显的方向有 up、west、east、south 和 north。
+
+    二柄长剑(Changjian)
+    三只铁轮(Iron falun)
+    大榕树(Rong shu)
+    扬州百姓 鲁卿琦(Lu qingqi)
+    扬州平民 朱惠四(Zhu huisi)
+
+西大街 - [大宋国] [城市]
+    这是条宽阔的青石板街道，向东西两头延伸。西大街是衙门所在，行人稀少，静悄悄
+的很是冷清。东边是一个热闹的广场。南边是兵营。北边就是衙门了。
+    「阳春」: 一轮火红的夕阳正徘徊在西方的地平线上。
+
+    这里明显的方向有 north、west、east 和 south。
+
+    天龙寺第十六代弟子「大理小王子苍蝇代言人」了段(Chennrcc)
+    流氓(Liu mang)
+
+当铺 - [大宋国] [城市] ★
+    这里是扬州的一家当铺，一只幌子(huangzi)被高高挂在门前，五尺高的柜台挡在你的
+面前，柜台上挂着一只牌子(paizi)。
+
+    这里明显的出口有 east、north、west 和 south。
+
+    水壶(Pot)
+    绣花绷架(Xiuhua bengjia)
+    当铺老板 唐楠(Tang nan)
+'''
 
 class BaseTriggers(IConfig):
     def __init__(self, session, *args, **kwargs):
         self.session = session
         self.ws = session.application.get_globals("ws_client")
 
-        # 初始化地图录制器
-        self.map_recorder = MapRecorder(session)  # 添加这一行
+        # 地图录制器已禁用
 
         # 初始化profile，确保它是一个字典
         self.profile = self.session.getVariable("char_profile")
@@ -82,12 +117,29 @@ class BaseTriggers(IConfig):
                 self.session, fr"^.+\(\w+\)告诉你：【{re.escape(self.session.vars['char_profile']['名字'])}\(\w+\)】目前在【(\w+)的(\w+)】,快去摁死它吧!$",
                 group="sys", onSuccess=self.tri_get_city
             ),
-            # > 〔GMCP〕GMCP.Buff: {"is_end": "true", "name": "加力","terminated": "completed"}
+            # 当铺 - [大宋国] [城市] ★
+            Trigger(
+                self.session, fr"^\s?{re.escape(self.session.vars['move']['short'])}\s-\s\[.+\]\s\[.+\]\s(\W)?$",
+                group="sys", onSuccess=self.tri_get_roomenode
+            )
         ]
+        
+
+    # 获取房间节点信息
+    def tri_get_roomenode(self, id, line, wildcards):
+        # room, area, short = wildcards
+        if (len(wildcards) > 0 and wildcards[0] == '★'):
+            self.session.info(11111)
+
+
     def tri_get_city(self, id, line, wildcards):
         city, room = wildcards
         self.session.vars['char_profile']['city'] = city
-        # self.session.vars['char_profile']['dengze_area'] = area
+        # 地图功能已移除，仅记录城市信息
+        try:
+            self.session.info(f"已记录城市信息: {city}")
+        except Exception:
+            pass
 
     # 获取真气值
     def tri_vigour_qi(self, id, line, wildcards):
@@ -145,16 +197,6 @@ class BaseTriggers(IConfig):
         '''
         GMCP.raw_hp [{"qi":{"effective":604,"current":604,"max":604},"combat_exp":{"current":57104},"vigour/qi":{"current":0},"neili":{"current":1090,"max":1090},"jingli":{"current":1006,"max":1006},"food":{"current":102},"water":{"current":226},"jing":{"effective":435,"current":435,"max":435}}]
         '''
-        # 确保profile是字典
-        # if self.profile is None:
-        #     self.profile = {}
-        #     self.session.setVariable("char_profile", self.profile)
-        # for key, value in wildcards[0].items():
-        #     self.session.info(f"{key}: {value}")
-        #     self.profile[key] = value
-        # # 更新session中的变量
-        # self.session.setVariable("char_profile", self.profile)
-        # self.session.vars["char_profile"].update(wildcards[0])
         pass
 
     def on_move(self, id, line, wildcards):
@@ -165,10 +207,20 @@ class BaseTriggers(IConfig):
         〔GMCP〕GMCP.Move: [{"result":"false"}]
         '''
         info = wildcards[0]
-        if info["result"] == "true":
-            self.session.setVariable("move", info)
-        else:
-            self.session.setVariable("move", '移动失败')
+        try:
+            if info.get("result") == "true":
+                # 保存原始移动信息到 session 变量
+                self.session.setVariable("move", info)
+                # 将移动事件转发给地图录制器，使用 map_recorder 的 on_move 处理并保存到 json
+                try:
+                    # map_recorder.on_move 接受相同的触发器签名 (id, line, wildcards)
+                    self.map_recorder.on_move(id, line, wildcards)
+                except Exception as e:
+                    self.session.error(f"地图录制器处理移动事件失败: {e}")
+            else:
+                self.session.setVariable("move", '移动失败')
+        except Exception as e:
+            self.session.error(f"on_move 处理失败: {e}")
         pass
 
     def on_buff(self, id, line, wildcards):
@@ -204,6 +256,7 @@ class BaseTriggers(IConfig):
             await self.session.exec_async("score")
             await asyncio.sleep(3)
             await self.session.exec_async("hp")
+            await self.session.exec_async(f"pp {self.session.vars['id']}")
         except Exception as e:
             self.session.error(f"发送score -family命令时出错: {e}")
 

@@ -9,10 +9,38 @@ Fullme UI窗口模块
 import sys
 import warnings
 import threading
+import os
 from PyQt5 import QtWidgets, QtCore, QtGui
 from fullme_window_ui import Ui_fullme_window
 from utils.image_fetcher import ImageFetcher
 
+# 更全面的警告屏蔽设置
+def suppress_qt_warnings():
+    """屏蔽Qt相关的警告"""
+    # 屏蔽所有PyQt相关的警告
+    warnings.filterwarnings("ignore", category=DeprecationWarning, module="PyQt5")
+    warnings.filterwarnings("ignore", category=RuntimeWarning, module="PyQt5")
+    warnings.filterwarnings("ignore", category=UserWarning, module="PyQt5")
+    
+    # 屏蔽sip相关的废弃警告
+    warnings.filterwarnings("ignore", category=DeprecationWarning, message="sipPyTypeDict.*deprecated")
+    
+    # 屏蔽QApplication不在主线程创建的警告
+    warnings.filterwarnings("ignore", category=RuntimeWarning, message="QApplication was not created in the main.*thread")
+    warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*QApplication.*main.*thread")
+    
+    # 屏蔽其他常见的Qt警告
+    warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*QWidget.*parent.*")
+    warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*QPixmap.*")
+    
+    # 设置环境变量屏蔽Qt警告
+    os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.*=false"
+    os.environ["QT_MESSAGE_PATTERN"] = ""
+
+# 调用警告屏蔽函数
+suppress_qt_warnings()
+
+# 原有的警告屏蔽代码（保持兼容）
 # 忽略sip相关的废弃警告
 warnings.filterwarnings("ignore", category=DeprecationWarning, message="sipPyTypeDict.*deprecated")
 
