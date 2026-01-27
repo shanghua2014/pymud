@@ -13,7 +13,8 @@ class AliasTest(IConfig):
 
     @alias("^pp\s(\w+)$")
     def onali_getfromskeleton(self, id, line, wildcards):
-        emo = random.sample(Emotes,1)
-        self.session.exec(f'helpme* {emo[0]}')
-        index = wildcards[0]
-        self.session.exec(f'helpme find {index}')
+        # emo = random.sample(Emotes,1)
+        # self.session.exec(f'helpme* {emo[0]}')
+        # index = wildcards[0]
+        # self.session.exec(f'helpme find {index}')
+        pass

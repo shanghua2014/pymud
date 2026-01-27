@@ -28,6 +28,14 @@ class MyConfig(IConfig):
 
         mods = list()
 
+        ''' 加载脚本 cmds '''
+        cur_dir = os.path.dirname(__file__)
+        dir = os.path.join(cur_dir, "cmds")
+        if os.path.exists(dir):
+            for file in os.listdir(dir):
+                if file.endswith(".py") and (not file.startswith("__")):
+                    mods.append(f"cmds.{file[:-3]}")
+
         ''' 加载脚本 script '''
         cur_dir = os.path.dirname(__file__)
         dir = os.path.join(cur_dir, "script")

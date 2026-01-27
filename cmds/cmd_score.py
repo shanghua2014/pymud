@@ -1,4 +1,4 @@
-from pymud import Command, Trigger, IConfig, DotDict, exception, trigger
+from pymud import Command, Trigger, IConfig, exception, trigger
 
 class CmdScore(Command, IConfig):
     def __init__(self, session, *args, **kwargs):
@@ -7,6 +7,7 @@ class CmdScore(Command, IConfig):
         if self.session.getVariable("char_profile") is None:
             self.session.setVariable("char_profile", {})
         self.profile = self.session.getVariable("char_profile")
+        self.reset()
 
     @trigger(r'^[╭┌][─]+人物详情[─┬]+[┐╮]$', id = "cmd.score.start", group = "cmd.score")
     def start(self, name, line, wildcards):    

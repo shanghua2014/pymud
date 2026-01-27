@@ -1,6 +1,7 @@
 # 修改后的完整代码
 import asyncio
 import re
+import time
 from pymud import IConfig, GMCPTrigger, Trigger
 
 import platform
@@ -60,8 +61,6 @@ class BaseTriggers(IConfig):
         self.session = session
         self.ws = session.application.get_globals("ws_client")
 
-        # 地图录制器已禁用
-
         # 初始化profile，确保它是一个字典
         self.profile = self.session.getVariable("char_profile")
         if self.profile is None:
@@ -116,22 +115,8 @@ class BaseTriggers(IConfig):
             Trigger(
                 self.session, fr"^.+\(\w+\)告诉你：【{re.escape(self.session.vars['char_profile']['名字'])}\(\w+\)】目前在【(\w+)的(\w+)】,快去摁死它吧!$",
                 group="sys", onSuccess=self.tri_get_city
-            ),
-            # 当铺 - [大宋国] [城市] ★
-            Trigger(
-                self.session, fr"^\s?{re.escape(self.session.vars['move']['short'])}\s-\s\[.+\]\s\[.+\]\s(\W)?$",
-                group="sys", onSuccess=self.tri_get_roomenode
             )
         ]
-        
-
-    # 获取房间节点信息
-    def tri_get_roomenode(self, id, line, wildcards):
-        # room, area, short = wildcards
-        if (len(wildcards) > 0 and wildcards[0] == '★'):
-            self.session.info(11111)
-
-
     def tri_get_city(self, id, line, wildcards):
         city, room = wildcards
         self.session.vars['char_profile']['city'] = city
@@ -241,7 +226,7 @@ class BaseTriggers(IConfig):
         pass
 
     def tri_init_vars(self, id, line, wildcards):
-        self.initStatus()
+        # self.initStatus()
         pass
 
     def initStatus(self):
