@@ -9,6 +9,20 @@ class MyConfig(IConfig):
         reload = kwargs.get("reload", False)
 
         self.session = session
+
+        # 将 session.info 赋值给 session.debug 并添加背景色
+        def _debug_with_bg(msg, *a, **kw):
+            try:
+                if isinstance(msg, str):
+                    # 黄色背景，红色前景
+                    bg_start = "\x1b[43m\x1b[31m"
+                    bg_end = "\x1b[0m"
+                    msg = f"{bg_start}{msg}{bg_end}"
+            except Exception:
+                pass
+            return self.session.info(msg, *a, **kw)
+        self.session.debug = _debug_with_bg
+
         self.session.info(session)
         self.session.info(self.session.getVariable("charname"))
 

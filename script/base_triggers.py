@@ -1,10 +1,12 @@
 # 修改后的完整代码
 import asyncio
+import re
 from pymud import IConfig, GMCPTrigger, Trigger
 
 import platform
 
 from fullme_ui import open_fullme_window, close_fullme_window, is_fullme_window_open
+from script.map_recorder import MapRecorder
 
 """
 GMCP频道：
@@ -12,13 +14,18 @@ GMCP频道：
         set raw_data_format 2  设置 hp * 输出格式
         tune gmcp format raw/pretty 设置中/英文格式
         〔GMCP〕GMCP.Combat: [{"jing_wound":0,"qi_damage":97,"eff_jing_pct":100,"qi_wound":96,"eff_qi_pct":81,"jing_pct":100,"jing_damage":0,"name":"流氓头","qi_pct":55,"id":"liumang tou#4336421"}]
+        ( 地痞似乎十分疲惫，看来需要好好休息了。)『地痞(damage:+97 气血:50%/91%)』
+        ( 地痞似乎十分疲惫，看来需要好好休息了。)『地痞(damage:+97 气血:50%/91%)』
 """
 
 
-class GMCPChannel(IConfig):
+class BaseTriggers(IConfig):
     def __init__(self, session, *args, **kwargs):
         self.session = session
         self.ws = session.application.get_globals("ws_client")
+
+        # 初始化地图录制器
+        self.map_recorder = MapRecorder(session)  # 添加这一行
 
         # 初始化profile，确保它是一个字典
         self.profile = self.session.getVariable("char_profile")
@@ -38,9 +45,9 @@ class GMCPChannel(IConfig):
         #     GMCPTrigger(
         #         self.session, "GMCP.Buff", group="sys", onSuccess=self.on_buff
         #     ),
-            # GMCPTrigger(
-            #     self.session, "GMCP.Move", group="sys", onSuccess=self.on_move
-            # ),
+            GMCPTrigger(
+                self.session, "GMCP.Move", group="sys", onSuccess=self.on_move
+            ),
             Trigger(self.session, r"^[> ]?目前权限：\(player\)",
                     onSuccess=self.tri_init_vars, group="sys", keepEval=True
                     ),
@@ -71,8 +78,16 @@ class GMCPChannel(IConfig):
                 self.session, r"^\s*│\s?【真气】\s?(\d+)\s+/\s?(\d+)\s+\[.*│$",
                 group="sys", onSuccess=self.tri_vigour_qi
             ),
+            Trigger(
+                self.session, fr"^.+\(\w+\)告诉你：【{re.escape(self.session.vars['char_profile']['名字'])}\(\w+\)】目前在【(\w+)的(\w+)】,快去摁死它吧!$",
+                group="sys", onSuccess=self.tri_get_city
+            ),
             # > 〔GMCP〕GMCP.Buff: {"is_end": "true", "name": "加力","terminated": "completed"}
         ]
+    def tri_get_city(self, id, line, wildcards):
+        city, room = wildcards
+        self.session.vars['char_profile']['city'] = city
+        # self.session.vars['char_profile']['dengze_area'] = area
 
     # 获取真气值
     def tri_vigour_qi(self, id, line, wildcards):
