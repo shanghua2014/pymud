@@ -5,13 +5,13 @@ from typing import List, Dict, Any, Optional
 class DatabaseManager:
     """SQLite数据库管理类"""
     
-    def __init__(self, db_path: str = "maps.db", table_name: str = "yangzhou"):
+    def __init__(self, db_path: str = "maps.db", table_name: str = "扬州"):
         """
         初始化数据库连接
         
         Args:
             db_path: 数据库文件路径，默认为当前目录下的maps.db
-            table_name: 默认表名，默认为 yangzhou
+            table_name: 默认表名，默认为 扬州
         """
         self.db_path = db_path
         self.table_name = table_name
@@ -93,19 +93,19 @@ class DatabaseManager:
     
     def get_all_tables(self) -> List[str]:
         """获取数据库中所有表名"""
-        query = "SELECT name FROM sqlite_master WHERE type='table'"
+        query = "SELECT room_name FROM sqlite_master WHERE type='table'"
         results = self.execute_query(query)
-        return [row['name'] for row in results]
+        return [row['room_name'] for row in results]
     
     # 增删改查四个独立方法
     
-    def insert_room(self, room_name: str, description: str, table_name: str = None) -> bool:
+    def insert_room(self, room_name: str, desc: str, table_name: str = None) -> bool:
         """
         插入新房间记录（增）
         
         Args:
             room_name: 房间名称
-            description: 房间描述
+            desc: 房间描述
             table_name: 表名，如果为None则使用默认表名
             
         Returns:
@@ -121,16 +121,16 @@ class DatabaseManager:
             return False
         
         # 根据表结构构建INSERT语句
-        columns = [col['name'] for col in table_info]
+        columns = [col['room_name'] for col in table_info]
         
-        if 'name' in columns and 'description' in columns:
-            # 标准表结构：name, description, created_at, updated_at
-            query = f"INSERT INTO {table_name} (name, description, created_at, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
-            params = (room_name, description)
-        elif 'room_name' in columns and 'description' in columns:
-            # 另一种表结构：room_name, description, npc, goods
-            query = f"INSERT INTO {table_name} (room_name, description, npc, goods) VALUES (?, ?, ?, ?)"
-            params = (room_name, description, '', '')  # npc和goods设为空字符串
+        if 'room_name' in columns and 'desc' in columns:
+            # 标准表结构：name, desc, npc, goods
+            query = f"INSERT INTO {table_name} (room_name, desc, npc, goods) VALUES (?, ?, ?, ?)"
+            params = (room_name, desc, '', '')  # npc和goods设为空字符串
+        elif 'room_name' in columns and 'desc' in columns:
+            # 另一种表结构：room_name, desc, npc, goods
+            query = f"INSERT INTO {table_name} (room_name, desc, npc, goods) VALUES (?, ?, ?, ?)"
+            params = (room_name, desc, '', '')  # npc和goods设为空字符串
         else:
             self.logger.error(f"表 {table_name} 结构不兼容，无法插入数据")
             return False
@@ -158,7 +158,7 @@ class DatabaseManager:
             results = self.execute_query(query, (room_id,))
         elif room_name is not None:
             # 按名称模糊查询
-            query = f"SELECT * FROM {table_name} WHERE name LIKE ? OR room_name LIKE ?"
+            query = f"SELECT * FROM {table_name} WHERE room_name LIKE ? OR room_name LIKE ?"
             results = self.execute_query(query, (f"%{room_name}%", f"%{room_name}%"))
         else:
             self.logger.error("必须提供room_name或room_id参数")
@@ -166,13 +166,13 @@ class DatabaseManager:
         
         return results[0] if results else None
     
-    def update_room(self, room_id: int, description: str = None, room_name: str = None, table_name: str = None) -> bool:
+    def update_room(self, room_id: int, desc: str = None, room_name: str = None, table_name: str = None) -> bool:
         """
         更新房间记录（改）
         
         Args:
             room_id: 房间ID
-            description: 新的房间描述
+            desc: 新的房间描述
             room_name: 新的房间名称
             table_name: 表名，如果为None则使用默认表名
             
@@ -182,20 +182,20 @@ class DatabaseManager:
         if table_name is None:
             table_name = self.table_name
         
-        if description is None and room_name is None:
-            self.logger.error("必须提供description或room_name参数")
+        if desc is None and room_name is None:
+            self.logger.error("必须提供desc或room_name参数")
             return False
         
         # 构建UPDATE语句
         set_parts = []
         params = []
         
-        if description is not None:
-            set_parts.append("description = ?")
-            params.append(description)
+        if desc is not None:
+            set_parts.append("desc = ?")
+            params.append(desc)
         
         if room_name is not None:
-            set_parts.append("name = ?")
+            set_parts.append("room_name = ?")
             params.append(room_name)
         
         set_parts.append("updated_at = CURRENT_TIMESTAMP")
@@ -224,7 +224,7 @@ class DatabaseManager:
             query = f"DELETE FROM {table_name} WHERE id = ?"
             params = (room_id,)
         elif room_name is not None:
-            query = f"DELETE FROM {table_name} WHERE name = ? OR room_name = ?"
+            query = f"DELETE FROM {table_name} WHERE room_name = ? OR room_name = ?"
             params = (room_name, room_name)
         else:
             self.logger.error("必须提供room_id或room_name参数")
@@ -246,13 +246,13 @@ class DatabaseManager:
         """
         return self.select_room(room_name=room_name, table_name=table_name)
     
-    def save_room_info(self, room_name: str, description: str, table_name: str = None) -> bool:
+    def save_room_info(self, room_name: str, desc: str, table_name: str = None) -> bool:
         """
         保存或更新房间信息（向后兼容）
         
         Args:
             room_name: 房间名称
-            description: 房间描述
+            desc: 房间描述
             table_name: 表名，如果为None则使用默认表名
             
         Returns:
@@ -266,10 +266,10 @@ class DatabaseManager:
         
         if existing_room:
             # 更新现有房间
-            return self.update_room(existing_room['id'], description=description, table_name=table_name)
+            return self.update_room(existing_room['id'], desc=desc, table_name=table_name)
         else:
             # 添加新房间
-            return self.insert_room(room_name, description, table_name=table_name)
+            return self.insert_room(room_name, desc, table_name=table_name)
 
 # 创建一个简单的测试脚本，用于查看数据库结构
 if __name__ == "__main__":
@@ -286,7 +286,7 @@ if __name__ == "__main__":
             print(f"\n{table}表结构:")
             columns = db.get_table_info(table)
             for col in columns:
-                print(f"  {col['name']} ({col['type']})")
+                print(f"  {col['room_name']} ({col['type']})")
         
         # 测试增删改查方法
         print("\n测试增删改查方法:")
@@ -303,7 +303,7 @@ if __name__ == "__main__":
             print(f"✓ 查询成功: {room}")
             
             # 更新测试数据
-            if db.update_room(room['id'], description="更新后的描述"):
+            if db.update_room(room['id'], desc="更新后的描述"):
                 print("✓ 更新成功")
             else:
                 print("✗ 更新失败")
