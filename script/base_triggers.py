@@ -201,7 +201,8 @@ class BaseTriggers(IConfig):
                     # map_recorder.on_move 接受相同的触发器签名 (id, line, wildcards)
                     self.map_recorder.on_move(id, line, wildcards)
                 except Exception as e:
-                    self.session.error(f"地图录制器处理移动事件失败: {e}")
+                    # self.session.error(f"地图录制器处理移动事件失败: {e}")
+                    pass
             else:
                 self.session.setVariable("move", '移动失败')
         except Exception as e:

@@ -2,15 +2,25 @@ import os
 
 from pymud import IConfig, Session
 
+from utils.sqlite import DatabaseManager
+
 
 class MyConfig(IConfig):
     def __init__(self, session: Session, *args, **kwargs):
-
 
         # 是否调用 #reload 命令重新加载模块
         reload = kwargs.get("reload", False)
 
         self.session = session
+
+
+        # 初始化数据库连接，使用自定义表名
+        self.db = DatabaseManager()
+        self.session.application.set_globals('db', self.db)
+        if not self.db.connect():
+            self.session.error("数据库连接失败！")
+            self.session.application.del_globals('db')
+
 
         # 将 session.info 赋值给 session.debug 并添加背景色
         def _debug_with_bg(msg, *a, **kw):
@@ -26,7 +36,6 @@ class MyConfig(IConfig):
         self.session.debug = _debug_with_bg
 
         self.session.info(session)
-        self.session.info(self.session.getVariable("charname"))
 
         mods = list()
 
