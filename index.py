@@ -5,6 +5,8 @@ from pymud import IConfig, Session
 
 class MyConfig(IConfig):
     def __init__(self, session: Session, *args, **kwargs):
+
+
         # 是否调用 #reload 命令重新加载模块
         reload = kwargs.get("reload", False)
 
