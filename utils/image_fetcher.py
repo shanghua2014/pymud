@@ -9,7 +9,7 @@ class ImageFetcher:
     """图片获取器类"""
 
     def __init__(self):
-        self.images_dir = "images/fullme"
+        self.images_dir = "resource/fullme"
         self._ensure_dir()
         self.active_threads = set()  # 跟踪活跃线程
 
@@ -31,7 +31,7 @@ class ImageFetcher:
                     captcha_img_url = img_tag['src']
                     # 完整URL
                     full_img_url = f"http://fullme.pkuxkx.net/{captcha_img_url.lstrip('./')}"
-                    # 下载图片放到 images 目录下
+                    # 下载图片放到 resource 目录下
                     img_response = requests.get(full_img_url)
                     if img_response.status_code == 200:
                         filename = captcha_img_url.split('/')[-1]

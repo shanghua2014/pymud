@@ -226,7 +226,7 @@ class FullmeWindow(QtWidgets.QWidget):
             # 尝试加载images/fullme目录下的默认图片
             for i in range(1, 5):
                 img_label = getattr(self.ui, f'label_fullme_{i}')
-                default_image = f"images/fullme/fullme{i}.jpg"
+                default_image = f"resource/fullme/fullme{i}.jpg"
                 try:
                     pixmap = QtGui.QPixmap(default_image)
                     img_label.setPixmap(pixmap)

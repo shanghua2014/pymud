@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyMUD客户端-北侠验证码</title>
+    <script src="jquery.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .server-info {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #4299e1;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .feature {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .feature:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .feature h3 {
+            color: #2d3748;
+            margin-top: 0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #48bb78;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .timestamp {
+            text-align: center;
+            color: #718096;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 PyMUD客户端 - 北侠验证码系统</h1>
+        
+        <div class="server-info">
+            <h2><span class="status-indicator"></span>服务器状态</h2>
+            <p><strong>状态:</strong> <span style="color: #48bb78;">正常运行</span></p>
+            <p><strong>服务:</strong> 验证码识别与处理</p>
+            <p><strong>目录:</strong> /Users/zhaoshanghua/github/pymud/resource</p>
+            <p><strong>启动时间:</strong> <span id="startTime"></span></p>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <h3>🔍 验证码识别</h3>
+                <p>自动识别游戏中的验证码</p>
+            </div>
+            <div class="feature">
+                <h3>🖼️ 图像处理</h3>
+                <p>高效的图像预处理算法</p>
+            </div>
+            <div class="feature">
+                <h3>⚡ 实时响应</h3>
+                <p>快速响应游戏需求</p>
+            </div>
+            <div class="feature">
+                <h3>🔒 安全可靠</h3>
+                <p>稳定的服务保障</p>
+            </div>
+        </div>
+
+        <div class="timestamp">
+            <p>页面最后更新: <span id="lastUpdate"></span></p>
+            <p>服务器运行时间: <span id="uptime"></span></p>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // 设置启动时间
+            const startTime = new Date();
+            $('#startTime').text(startTime.toLocaleString());
+            
+            // 更新时间戳
+            function updateTimestamps() {
+                const now = new Date();
+                $('#lastUpdate').text(now.toLocaleString());
+                
+                // 计算运行时间
+                const uptime = Math.floor((now - startTime) / 1000);
+                const hours = Math.floor(uptime / 3600);
+                const minutes = Math.floor((uptime % 3600) / 60);
+                const seconds = uptime % 60;
+                $('#uptime').text(`${hours}小时 ${minutes}分钟 ${seconds}秒`);
+            }
+            
+            // 初始更新
+            updateTimestamps();
+            
+            // 每秒更新一次
+            setInterval(updateTimestamps, 1000);
+            
+            console.log('PyMUD验证码系统已加载');
+        });
+    </script>
+</body>
+</html>

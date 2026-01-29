@@ -1260,7 +1260,7 @@
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="code.qrc">:/imgs/images/10k58PIC3vNazdMgB3VeC_origin_PIC2018.png</pixmap>
+           <pixmap resource="code.qrc">:/imgs/resource/10k58PIC3vNazdMgB3VeC_origin_PIC2018.png</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
@@ -1377,7 +1377,7 @@
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="code.qrc">:/imgs/images/fullme/fullme1.jpg</pixmap>
+           <pixmap resource="code.qrc">:/imgs/resource/fullme/fullme1.jpg</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
@@ -1402,7 +1402,7 @@
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="code.qrc">:/imgs/images/fullme/fullme2.jpg</pixmap>
+           <pixmap resource="code.qrc">:/imgs/resource/fullme/fullme2.jpg</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
@@ -1427,7 +1427,7 @@
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="code.qrc">:/imgs/images/fullme/fullme3.jpg</pixmap>
+           <pixmap resource="code.qrc">:/imgs/resource/fullme/fullme3.jpg</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
@@ -1452,7 +1452,7 @@
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="code.qrc">:/imgs/images/fullme/fullme4.jpg</pixmap>
+           <pixmap resource="code.qrc">:/imgs/resource/fullme/fullme4.jpg</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>

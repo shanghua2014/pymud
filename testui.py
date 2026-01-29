@@ -59,7 +59,7 @@ class PyMudScreenUI(QtWidgets.QMainWindow):
                 self.is_max_height = True
 
                 # 更换label_fullme_1的图片地址
-                self.ui.label_fullme_1.setPixmap(QPixmap("images/fullme\\b2evo_captcha_9FCBF2C98A283873CCFF663CB6AE5ABB.jpg"))
+                self.ui.label_fullme_1.setPixmap(QPixmap("resource/fullme\\b2evo_captcha_9FCBF2C98A283873CCFF663CB6AE5ABB.jpg"))
                 
                 # 启动180秒倒计时
                 self.start_countdown()
