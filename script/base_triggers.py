@@ -18,43 +18,6 @@ GMCP频道：
         ( 地痞似乎十分疲惫，看来需要好好休息了。)『地痞(damage:+97 气血:50%/91%)』
 """
 
-'''
-中央广场 - [大宋国] [城市] ㊣ ★
-    这里是扬州城的中心，一个很宽阔的广场，地面由青石铺就。一些游手好闲的人在这
-里溜达，经常有卖艺人在这里表演。中央有一棵大榕树，盘根错节，据传已有千年的树龄
-，见证了这座城市的历史。树干底部有一个很大的洞(shudong)。你可以看到北边有来自各
-地的行人来来往往，南面人声鼎沸，一派繁华景象，东边不时地传来朗朗的读书声，西边
-则见不到几个行人，一片肃静。
-    「阳春」: 一轮火红的夕阳正徘徊在西方的地平线上。
-
-    这里明显的方向有 up、west、east、south 和 north。
-
-    二柄长剑(Changjian)
-    三只铁轮(Iron falun)
-    大榕树(Rong shu)
-    扬州百姓 鲁卿琦(Lu qingqi)
-    扬州平民 朱惠四(Zhu huisi)
-
-西大街 - [大宋国] [城市]
-    这是条宽阔的青石板街道，向东西两头延伸。西大街是衙门所在，行人稀少，静悄悄
-的很是冷清。东边是一个热闹的广场。南边是兵营。北边就是衙门了。
-    「阳春」: 一轮火红的夕阳正徘徊在西方的地平线上。
-
-    这里明显的方向有 north、west、east 和 south。
-
-    天龙寺第十六代弟子「大理小王子苍蝇代言人」了段(Chennrcc)
-    流氓(Liu mang)
-
-当铺 - [大宋国] [城市] ★
-    这里是扬州的一家当铺，一只幌子(huangzi)被高高挂在门前，五尺高的柜台挡在你的
-面前，柜台上挂着一只牌子(paizi)。
-
-    这里明显的出口有 east、north、west 和 south。
-
-    水壶(Pot)
-    绣花绷架(Xiuhua bengjia)
-    当铺老板 唐楠(Tang nan)
-'''
 
 class BaseTriggers(IConfig):
     def __init__(self, session, *args, **kwargs):
@@ -117,6 +80,15 @@ class BaseTriggers(IConfig):
                 group="sys", onSuccess=self.tri_get_city
             )
         ]
+        if 'potential' not in self.profile:
+            self._gmcp_status.append(
+                Trigger(self.session, fr"^│.*│【经验】\s?(\S+)\s+│$",group="sys", onSuccess=self.tri_get_potential)
+            )
+
+    def tri_get_potential(self, id, line, wildcards):
+        potential = wildcards[0]
+        self.session.vars['char_profile']['potential'] = potential
+
     def tri_get_city(self, id, line, wildcards):
         city, room = wildcards
         self.session.vars['char_profile']['city'] = city

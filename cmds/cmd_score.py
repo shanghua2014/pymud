@@ -14,7 +14,7 @@ class CmdScore(Command, IConfig):
         self.session.enableGroup("cmd.score", types = [Trigger])
 
 
-    @trigger(r'^[╰└][─┴]+[^└─┴┘]+[─]+[┘╯]$', id = "cmd.score.end", group = "cmd.score")
+    @trigger(r'^[╰└][─┴]+[─]+[┘╯]$', id = "cmd.score.end", group = "cmd.score")
     def stop(self, name, line, wildcards):      
         self.session.enableGroup("cmd.score", enabled = False, types = [Trigger])
 

@@ -7,45 +7,10 @@ Fullme UI窗口模块
 """
 
 import sys
-import warnings
 import threading
-import os
 from PyQt5 import QtWidgets, QtCore, QtGui
 from fullme_window_ui import Ui_fullme_window
 from utils.image_fetcher import ImageFetcher
-
-# 更全面的警告屏蔽设置
-def suppress_qt_warnings():
-    """屏蔽Qt相关的警告"""
-    # 屏蔽所有PyQt相关的警告
-    warnings.filterwarnings("ignore", category=DeprecationWarning, module="PyQt5")
-    warnings.filterwarnings("ignore", category=RuntimeWarning, module="PyQt5")
-    warnings.filterwarnings("ignore", category=UserWarning, module="PyQt5")
-    
-    # 屏蔽sip相关的废弃警告
-    warnings.filterwarnings("ignore", category=DeprecationWarning, message="sipPyTypeDict.*deprecated")
-    
-    # 屏蔽QApplication不在主线程创建的警告
-    warnings.filterwarnings("ignore", category=RuntimeWarning, message="QApplication was not created in the main.*thread")
-    warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*QApplication.*main.*thread")
-    
-    # 屏蔽其他常见的Qt警告
-    warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*QWidget.*parent.*")
-    warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*QPixmap.*")
-    
-    # 设置环境变量屏蔽Qt警告
-    os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.*=false"
-    os.environ["QT_MESSAGE_PATTERN"] = ""
-
-# 调用警告屏蔽函数
-suppress_qt_warnings()
-
-# 原有的警告屏蔽代码（保持兼容）
-# 忽略sip相关的废弃警告
-warnings.filterwarnings("ignore", category=DeprecationWarning, message="sipPyTypeDict.*deprecated")
-
-# 忽略QApplication不在主线程创建的警告
-warnings.filterwarnings("ignore", category=RuntimeWarning, message="QApplication was not created in the main() thread")
 
 
 class FullmeWindowManager:
@@ -82,6 +47,10 @@ class FullmeWindowManager:
             # 窗口已经打开，将其置顶
             self._window.activateWindow()
             self._window.raise_()
+            
+            # 延迟0.5秒后取消置顶
+            QtCore.QTimer.singleShot(500, self._cancel_window_topmost)
+            
             return True
 
         # 在新线程中打开窗口
@@ -91,6 +60,10 @@ class FullmeWindowManager:
             daemon=True
         )
         self._thread.start()
+        
+        # 延迟0.5秒后取消置顶（等待窗口创建完成）
+        QtCore.QTimer.singleShot(500, self._cancel_window_topmost)
+        
         return True
 
     def _open_window_thread(self, captcha_url):
@@ -103,6 +76,8 @@ class FullmeWindowManager:
 
             # 创建窗口
             self._window = FullmeWindow(captcha_url)
+            # 连接窗口关闭信号到线程结束处理
+            self._window.destroyed.connect(self._on_window_destroyed)
             self._window.show()
 
             # print("Fullme验证码窗口已打开")
@@ -113,6 +88,24 @@ class FullmeWindowManager:
         except Exception as e:
             # print(f"打开Fullme窗口失败: {e}")
             pass
+    
+    def _on_window_destroyed(self):
+        """窗口销毁时的回调函数，清理资源并结束线程"""
+        # 清理窗口引用
+        self._window = None
+        # 退出应用程序事件循环
+        if self._app:
+            self._app.quit()
+        # 清理线程引用
+        self._thread = None
+
+    def _cancel_window_topmost(self):
+        """取消窗口置顶状态"""
+        if self._window is not None and self._window.isVisible():
+            # 取消窗口置顶标志
+            self._window.setWindowFlags(self._window.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
+            self._window.show()
+            # print("窗口已取消置顶")
 
     def close_window(self):
         """关闭Fullme窗口
@@ -132,6 +125,12 @@ class FullmeWindowManager:
             if fetcher:
                 deleted_count = fetcher.cleanup_images()
                 # print(f"清理完成，共删除 {deleted_count} 个临时图片文件")
+            
+            # 退出应用程序事件循环
+            if self._app:
+                self._app.quit()
+            # 清理线程引用
+            self._thread = None
 
             return True
         return False
@@ -177,9 +176,19 @@ class FullmeWindow(QtWidgets.QWidget):
 
         # 窗口显示后启动下载线程
         self.showEvent = self.on_show
+        
+        # 设置窗口关闭时清理资源
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+    
+    def closeEvent(self, event):
+        """窗口关闭事件，清理资源"""
+        # 清理图片获取器资源
+        if hasattr(self, 'fetcher') and self.fetcher:
+            self.fetcher.cleanup_images()
+        event.accept()
 
     def on_show(self, event):
-        """窗口显示事件，启动图片下载"""
+        """窗口显示事件，启动图片下载并模拟键盘事件"""
         super().showEvent(event)
 
         # 启动4个下载线程（下载4张验证码图片）
@@ -189,35 +198,80 @@ class FullmeWindow(QtWidgets.QWidget):
 
         # 延迟1秒后加载图片到窗口
         QtCore.QTimer.singleShot(1000, self.load_images)
+        
+        # 延迟0秒后模拟按下Ctrl+L组合键
+        QtCore.QTimer.singleShot(1000, self.simulate_ctrl_l)
+    
+    def simulate_ctrl_l(self):
+        """
+        模拟按下Ctrl+L组合键
+        
+        功能说明：
+        1. 使用pyautogui模拟键盘事件
+        2. 发送Ctrl键按下事件
+        3. 发送L键按下事件
+        4. 发送L键释放事件
+        5. 发送Ctrl键释放事件
+        """
+        try:
+            # 导入pyautogui模块
+            import pyautogui
+            
+            # 模拟Ctrl+L组合键
+            pyautogui.keyDown('ctrl')  # 按下Ctrl键
+            pyautogui.press('l')       # 按下并释放L键
+            pyautogui.keyUp('ctrl')    # 释放Ctrl键
+            
+            # print("已使用pyautogui模拟按下Ctrl+L组合键")
+            
+        except Exception as e:
+            # 回退到原来的PyQt5实现
+            self.session.error(f"失败：pyautogui模拟按下Ctrl+L组合键")
+            pass
 
     def load_images(self):
-        """加载下载的图片到窗口标签"""
+        """
+        加载下载的图片到窗口标签
+        
+        功能说明：
+        1. 获取图片获取器下载的非Fullme图片列表
+        2. 检查图片数量是否足够（至少4张）
+        3. 如果图片足够，将图片加载到对应的UI标签中
+        4. 如果图片不足或加载失败，使用默认图片作为备用
+        5. 支持错误处理，确保程序稳定性
+        """
         try:
             # 获取下载的图片文件列表
             non_fullme_images = self.fetcher.get_non_fullme_images()
 
-            # 检查是否有足够的图片
+            # 检查是否有足够的图片（需要4张图片对应4个标签）
             if len(non_fullme_images) >= 4:
                 # print(f"找到 {len(non_fullme_images)} 张图片，开始加载到窗口")
 
-                # 更换UI中的图片路径
+                # 遍历4个图片标签，将下载的图片设置到对应的标签中
                 for i in range(1, 5):
+                    # 获取对应的图片标签控件
                     img_label = getattr(self.ui, f'label_fullme_{i}')
+                    
+                    # 检查索引是否在有效范围内
                     if i-1 < len(non_fullme_images):
+                        # 创建QPixmap对象并设置到标签中
                         pixmap = QtGui.QPixmap(non_fullme_images[i-1])
                         img_label.setPixmap(pixmap)
                         # print(f"图片 {i} 加载成功: {non_fullme_images[i-1]}")
                     else:
+                        # 索引超出范围，跳过此标签
                         # print(f"图片 {i} 索引超出范围")
                         pass
             else:
+                # 图片数量不足，使用默认图片作为备用方案
                 # print(f"图片数量不足，只找到 {len(non_fullme_images)} 张图片")
-                # 如果没有下载到足够的图片，使用默认图片
                 self.load_default_images()
 
         except Exception as e:
+            # 捕获所有异常，确保程序不会因图片加载失败而崩溃
             # print(f"加载图片失败: {e}")
-            # 出错时加载默认图片
+            # 出错时加载默认图片作为容错处理
             self.load_default_images()
 
     def load_default_images(self):
@@ -237,23 +291,6 @@ class FullmeWindow(QtWidgets.QWidget):
         except Exception as e:
             # print(f"加载默认图片失败: {e}")
             pass
-
-    def keyPressEvent(self, event):
-        """键盘事件处理"""
-        if event.key() == QtCore.Qt.Key_F11:
-            # F11键切换窗口置顶状态
-            if self.windowFlags() & QtCore.Qt.WindowStaysOnTopHint:
-                self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
-                # print("取消窗口置顶")
-            else:
-                self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
-                # print("设置窗口置顶")
-            self.show()
-
-        elif event.key() == QtCore.Qt.Key_Escape:
-            # ESC键关闭窗口
-            self.close()
-            # print("窗口已关闭")
 
 
 # 创建全局实例

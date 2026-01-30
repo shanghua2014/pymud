@@ -14,11 +14,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_fullme_window(object):
     def setupUi(self, fullme_window):
         fullme_window.setObjectName("fullme_window")
-        fullme_window.resize(350, 480)
-        fullme_window.setMinimumSize(QtCore.QSize(350, 480))
-        fullme_window.setMaximumSize(QtCore.QSize(350, 480))
+        fullme_window.resize(400, 530)
+        fullme_window.setMinimumSize(QtCore.QSize(400, 530))
+        fullme_window.setMaximumSize(QtCore.QSize(400, 530))
         self.verticalLayoutWidget = QtWidgets.QWidget(fullme_window)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 0, 351, 481))
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 0, 401, 531))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
