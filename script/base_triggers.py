@@ -1,12 +1,12 @@
 # 修改后的完整代码
 import asyncio
 import re
+import threading
 import time
 from pymud import IConfig, GMCPTrigger, Trigger
-
 import platform
-
 from fullme_ui import open_fullme_window, close_fullme_window, is_fullme_window_open
+from utils.web_server import start_web_server_in_thread
 
 """
 GMCP频道：
@@ -78,13 +78,21 @@ class BaseTriggers(IConfig):
             Trigger(
                 self.session, fr"^.+\(\w+\)告诉你：【{re.escape(self.session.vars['char_profile']['名字'])}\(\w+\)】目前在【(\w+)的(\w+)】,快去摁死它吧!$",
                 group="sys", onSuccess=self.tri_get_city
+            ),
+            Trigger(
+                self.session, fr"^你说道：「haha」$",
+                group="sys", onSuccess=self.tri_test
             )
         ]
+
         if 'potential' not in self.profile:
             self._gmcp_status.append(
                 Trigger(self.session, fr"^│.*│【经验】\s?(\S+)\s+│$",group="sys", onSuccess=self.tri_get_potential)
             )
-
+    def tri_test(self, id, line, wildcards):
+        self.session.info(f"测试触发: {line}")
+        start_web_server_in_thread(getfm="your_url",auto_shutdown_seconds=30)
+       
     def tri_get_potential(self, id, line, wildcards):
         potential = wildcards[0]
         self.session.vars['char_profile']['potential'] = potential
@@ -119,6 +127,8 @@ class BaseTriggers(IConfig):
     # fullmeCD结束
     def tri_over_fullme(self, id, line, wildcards):
         self.session.vars["char_profile"]['fullme_time'] = 900
+        if platform.system() != "Windows":
+            return
         self.tri_open_fullme()
         # 关闭Fullme验证码窗口
         try:
@@ -131,7 +141,8 @@ class BaseTriggers(IConfig):
     def tri_get_fullme(self, id, line, wildcards):
         # 只有 Windows 系统才调用 fullme_ui 模块打开验证码窗口
         if platform.system() != "Windows":
-            return
+            # 开启web服务
+            start_web_server_in_thread(getfm=line)
         try:
             # 使用获取到的验证码URL打开窗口
             open_fullme_window(line)

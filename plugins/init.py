@@ -2,6 +2,7 @@ import os
 
 from pymud import PyMudApp, Session
 
+
 PLUGIN_NAME = "WebSocket客户端"
 PLUGIN_DESC = {
     "VERSION": "1.0.0",
@@ -19,7 +20,8 @@ class ConnectServer:
 # 插件入口函数
 def PLUGIN_PYMUD_START(app: PyMudApp) -> None:
     """应用启动时调用的插件入口函数"""
-
+    # start_web_server('https://www.baidu.com')
+    pass
 
 def PLUGIN_SESSION_CREATE(session: Session) -> None:
     """应用启动时调用的插件入口函数"""

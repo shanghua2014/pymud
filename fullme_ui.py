@@ -80,8 +80,6 @@ class FullmeWindowManager:
             self._window.destroyed.connect(self._on_window_destroyed)
             self._window.show()
 
-            # print("Fullme验证码窗口已打开")
-
             # 运行事件循环
             self._app.exec_()
 

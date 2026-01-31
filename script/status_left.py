@@ -1,4 +1,5 @@
 import functools
+import threading
 import time
 
 from prompt_toolkit import ANSI
@@ -6,6 +7,8 @@ from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 from pkg_confirm import confirm
 from pymud.settings import Settings
+
+from utils.web_server import start_web_server_in_thread
 
 
 class Configuration:
@@ -83,6 +86,14 @@ class Configuration:
     def opFullmeFn(self, mouse_event: MouseEvent):
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
             self.session.exec('fullme')
+    
+    def testFn(self, mouse_event: MouseEvent):
+        if mouse_event.event_type == MouseEventType.MOUSE_UP:
+            # http://fullme.pkuxkx.net/robot.php?filename=1769829801807037
+            # server = start_web_server_in_thread(getfm="your_url")
+            # server.stop()
+            self.session.exec('say haha')
+
 
     async def startJobFn(self, mouse_event: MouseEvent):
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
@@ -170,7 +181,8 @@ class Configuration:
             formatted_list.append(("", "-------------------------"))
             formatted_list.append(("", "\n"))
             self.session.vars['char_profile']['fullme_time'] = 0
-
+        
+        formatted_list.append(("fg:cyan", "⏰ 点我", functools.partial(self.testFn)))
         return formatted_list
 
     def progress_bar_styles(self, current, maximum=10, barlength=9):

@@ -3,7 +3,6 @@ import os
 from pymud import IConfig, Session
 
 from utils.sqlite import DatabaseManager
-from utils.web_server import start_web_server
 
 
 class MyConfig(IConfig):
@@ -13,10 +12,6 @@ class MyConfig(IConfig):
         reload = kwargs.get("reload", False)
 
         self.session = session
-
-        # 启动独立的Web服务器（与其他逻辑无关）
-        # start_web_server()
-
 
         # 初始化数据库连接，使用自定义表名
         self.db = DatabaseManager()
@@ -73,10 +68,4 @@ class MyConfig(IConfig):
         self.mods = mods
 
     def __unload__(self):
-        # 停止Web服务器
-        web_server = self.session.application.get_globals('web_server')
-        if web_server:
-            web_server.stop()
-            self.session.application.del_globals('web_server')
-        
         self.session.unload_module(self.mods)

@@ -36,27 +36,16 @@
             margin: 20px 0;
             border-left: 4px solid #4299e1;
         }
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 30px 0;
-        }
-        .feature {
-            background: #edf2f7;
+        .parameter-info {
+            background: #fff5f5;
             padding: 15px;
             border-radius: 5px;
-            text-align: center;
-            transition: transform 0.2s;
+            margin: 20px 0;
+            border-left: 4px solid #f56565;
+            word-break: break-all;
+            display:flex
         }
-        .feature:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .feature h3 {
-            color: #2d3748;
-            margin-top: 0;
-        }
+        
         .status-indicator {
             display: inline-block;
             width: 10px;
@@ -84,30 +73,18 @@
         <h1>🎮 PyMUD客户端 - 北侠验证码系统</h1>
         
         <div class="server-info">
-            <h2><span class="status-indicator"></span>服务器状态</h2>
+            <h2><span class="status-indicator"></span>本服务器状态</h2>
             <p><strong>状态:</strong> <span style="color: #48bb78;">正常运行</span></p>
             <p><strong>服务:</strong> 验证码识别与处理</p>
             <p><strong>目录:</strong> /Users/zhaoshanghua/github/pymud/resource</p>
             <p><strong>启动时间:</strong> <span id="startTime"></span></p>
         </div>
 
-        <div class="features">
-            <div class="feature">
-                <h3>🔍 验证码识别</h3>
-                <p>自动识别游戏中的验证码</p>
-            </div>
-            <div class="feature">
-                <h3>🖼️ 图像处理</h3>
-                <p>高效的图像预处理算法</p>
-            </div>
-            <div class="feature">
-                <h3>⚡ 实时响应</h3>
-                <p>快速响应游戏需求</p>
-            </div>
-            <div class="feature">
-                <h3>🔒 安全可靠</h3>
-                <p>稳定的服务保障</p>
-            </div>
+        <div class="parameter-info" id="parameterSection">
+            <img src="." alt="加载中。。。"/>
+            <img src="." alt="加载中。。。"/>
+            <img src="." alt="加载中。。。"/>
+            <img src="." alt="加载中。。。"/>
         </div>
 
         <div class="timestamp">
@@ -122,6 +99,28 @@
             const startTime = new Date();
             $('#startTime').text(startTime.toLocaleString());
             
+            // 处理URL参数
+            function handleUrlParameters() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const getfmParam = urlParams.get('getfm');
+                // for (let i=0;i<4;i++){
+                    $.ajax({
+                    url: getfmParam,
+                    type: 'GET',
+                    dataType: 'jsonp',
+                    jsonp: 'callback',
+                    success: function(data) {
+                        // 处理返回的图片数据
+                        $('#parameterSection img').eq(i).attr('src', data);
+                    },
+                    error: function() {
+                        // $('#parameterSection').hide();
+                        console.log('图片加载失败');
+                    }
+                });
+                // }
+            }
+            
             // 更新时间戳
             function updateTimestamps() {
                 const now = new Date();
@@ -135,13 +134,14 @@
                 $('#uptime').text(`${hours}小时 ${minutes}分钟 ${seconds}秒`);
             }
             
-            // 初始更新
+            // 初始处理参数和时间戳
+            handleUrlParameters();
             updateTimestamps();
             
-            // 每秒更新一次
+            // 每秒更新一次时间戳
             setInterval(updateTimestamps, 1000);
             
-            console.log('PyMUD验证码系统已加载');
+            console.log('PyMUD验证码系统已加载，URL参数处理完成');
         });
     </script>
 </body>
