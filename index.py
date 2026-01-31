@@ -19,6 +19,9 @@ class MyConfig(IConfig):
         if not self.db.connect():
             self.session.error("数据库连接失败！")
             self.session.application.del_globals('db')
+        
+        # 创建房间连接表
+        self.db.create_room_connections_table()
 
 
         # 将 session.info 赋值给 session.debug、session.error 并添加背景色

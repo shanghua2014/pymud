@@ -60,12 +60,7 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
-        .timestamp {
-            text-align: center;
-            color: #718096;
-            font-size: 0.9em;
-            margin-top: 20px;
-        }
+        
     </style>
 </head>
 <body>
@@ -73,9 +68,8 @@
         <h1>🎮 PyMUD客户端 - 北侠验证码系统</h1>
         
         <div class="server-info">
-            <h2><span class="status-indicator"></span>本服务器状态</h2>
-            <p><strong>状态:</strong> <span style="color: #48bb78;">正常运行</span></p>
-            <p><strong>服务:</strong> 验证码识别与处理</p>
+            <h2><span class="status-indicator"></span>本地服务器状态</h2>
+            <p><strong>状态:</strong> <span style="color: #48bb78;" id="status">正常运行</span></p>
             <p><strong>目录:</strong> /Users/zhaoshanghua/github/pymud/resource</p>
             <p><strong>启动时间:</strong> <span id="startTime"></span></p>
         </div>
@@ -87,10 +81,6 @@
             <img src="." alt="加载中。。。"/>
         </div>
 
-        <div class="timestamp">
-            <p>页面最后更新: <span id="lastUpdate"></span></p>
-            <p>服务器运行时间: <span id="uptime"></span></p>
-        </div>
     </div>
 
     <script>
@@ -121,25 +111,8 @@
                 // }
             }
             
-            // 更新时间戳
-            function updateTimestamps() {
-                const now = new Date();
-                $('#lastUpdate').text(now.toLocaleString());
-                
-                // 计算运行时间
-                const uptime = Math.floor((now - startTime) / 1000);
-                const hours = Math.floor(uptime / 3600);
-                const minutes = Math.floor((uptime % 3600) / 60);
-                const seconds = uptime % 60;
-                $('#uptime').text(`${hours}小时 ${minutes}分钟 ${seconds}秒`);
-            }
-            
             // 初始处理参数和时间戳
             handleUrlParameters();
-            updateTimestamps();
-            
-            // 每秒更新一次时间戳
-            setInterval(updateTimestamps, 1000);
             
             console.log('PyMUD验证码系统已加载，URL参数处理完成');
         });

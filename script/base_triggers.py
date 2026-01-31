@@ -1,12 +1,9 @@
 # 修改后的完整代码
 import asyncio
 import re
-import threading
-import time
 from pymud import IConfig, GMCPTrigger, Trigger
 import platform
 from fullme_ui import open_fullme_window, close_fullme_window, is_fullme_window_open
-from utils.web_server import start_web_server_in_thread
 
 """
 GMCP频道：
@@ -91,7 +88,8 @@ class BaseTriggers(IConfig):
             )
     def tri_test(self, id, line, wildcards):
         self.session.info(f"测试触发: {line}")
-        start_web_server_in_thread(getfm="your_url",auto_shutdown_seconds=30)
+        # start_web_server(getfm="your_url")
+        
        
     def tri_get_potential(self, id, line, wildcards):
         potential = wildcards[0]
@@ -141,8 +139,13 @@ class BaseTriggers(IConfig):
     def tri_get_fullme(self, id, line, wildcards):
         # 只有 Windows 系统才调用 fullme_ui 模块打开验证码窗口
         if platform.system() != "Windows":
-            # 开启web服务
-            start_web_server_in_thread(getfm=line)
+            # 开启web服务，传递完整的fullme URL
+            try:
+                from utils.web_server import start_web_server
+                start_web_server(getfm=line, open_browser=True)
+            except Exception as e:
+                self.session.error(f"启动web服务器失败: {e}")
+            return
         try:
             # 使用获取到的验证码URL打开窗口
             open_fullme_window(line)

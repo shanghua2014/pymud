@@ -203,3 +203,147 @@ class DatabaseManager:
             self.logger.info(f"SQL: {sql}")
             self.logger.info(f"参数: {params}")
         return self.execute_update(sql, params)
+    
+    def create_room_connections_table(self):
+        """
+        创建房间连接关系表
+        """
+        try:
+            cursor = self.connection.cursor()
+            # 创建房间连接表，记录两个房间之间的连接关系
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS room_connections (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    from_room_id INTEGER,
+                    to_room_id INTEGER,
+                    direction TEXT,
+                    FOREIGN KEY (from_room_id) REFERENCES 扬州(id),
+                    FOREIGN KEY (to_room_id) REFERENCES 扬州(id)
+                )
+            ''')
+            self.connection.commit()
+            return True
+        except sqlite3.Error as e:
+            self.logger.error(f"创建房间连接表失败: {e}")
+            return False
+
+    def add_room_connection(self, from_room_id: int, to_room_id: int, direction: str) -> bool:
+        """
+        添加房间连接关系
+        
+        Args:
+            from_room_id: 起始房间ID
+            to_room_id: 目标房间ID
+            direction: 连接方向（如：north, south, east, west等）
+            
+        Returns:
+            添加是否成功
+        """
+        try:
+            cursor = self.connection.cursor()
+            # 检查连接是否已存在
+            cursor.execute('''
+                SELECT id FROM room_connections 
+                WHERE from_room_id = ? AND to_room_id = ? AND direction = ?
+            ''', (from_room_id, to_room_id, direction))
+            
+            if cursor.fetchone() is None:
+                # 插入新的连接关系
+                cursor.execute('''
+                    INSERT INTO room_connections (from_room_id, to_room_id, direction) 
+                    VALUES (?, ?, ?)
+                ''', (from_room_id, to_room_id, direction))
+                self.connection.commit()
+                self.logger.info(f"房间连接已添加: {from_room_id} -> {to_room_id} ({direction})")
+                return True
+            else:
+                self.logger.info(f"房间连接已存在: {from_room_id} -> {to_room_id} ({direction})")
+                return True
+        except sqlite3.Error as e:
+            self.logger.error(f"添加房间连接失败: {e}")
+            return False
+
+    def get_room_connections(self, room_id: int) -> List[Dict[str, Any]]:
+        """
+        获取指定房间的所有连接
+        
+        Args:
+            room_id: 房间ID
+            
+        Returns:
+            连接信息列表
+        """
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute('''
+                SELECT rc.direction, rc.to_room_id, r.rname, r.desc 
+                FROM room_connections rc
+                LEFT JOIN 扬州 r ON rc.to_room_id = r.id
+                WHERE rc.from_room_id = ?
+                ORDER BY rc.direction
+            ''', (room_id,))
+            
+            results = [dict(row) for row in cursor.fetchall()]
+            return results
+        except sqlite3.Error as e:
+            self.logger.error(f"查询房间连接失败: {e}")
+            return []
+
+    def get_connected_rooms(self, room_id: int) -> List[Dict[str, Any]]:
+        """
+        获取与指定房间相连的所有房间
+        
+        Args:
+            room_id: 房间ID
+            
+        Returns:
+            相连房间信息列表
+        """
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute('''
+                SELECT rc.direction, rc.from_room_id, rc.to_room_id, r.rname, r.desc 
+                FROM room_connections rc
+                LEFT JOIN 扬州 r ON rc.to_room_id = r.id
+                WHERE rc.from_room_id = ? OR rc.to_room_id = ?
+                ORDER BY rc.direction
+            ''', (room_id, room_id))
+            
+            results = [dict(row) for row in cursor.fetchall()]
+            return results
+        except sqlite3.Error as e:
+            self.logger.error(f"查询相连房间失败: {e}")
+            return []
+
+    def remove_room_connection(self, from_room_id: int, to_room_id: int, direction: str = None) -> bool:
+        """
+        移除房间连接关系
+        
+        Args:
+            from_room_id: 起始房间ID
+            to_room_id: 目标房间ID
+            direction: 方向，如果为None则移除所有方向的连接
+            
+        Returns:
+            移除是否成功
+        """
+        try:
+            cursor = self.connection.cursor()
+            if direction:
+                cursor.execute('''
+                    DELETE FROM room_connections 
+                    WHERE from_room_id = ? AND to_room_id = ? AND direction = ?
+                ''', (from_room_id, to_room_id, direction))
+            else:
+                cursor.execute('''
+                    DELETE FROM room_connections 
+                    WHERE from_room_id = ? AND to_room_id = ?
+                ''', (from_room_id, to_room_id))
+            
+            affected_rows = cursor.rowcount
+            self.connection.commit()
+            self.logger.info(f"移除了 {affected_rows} 个房间连接")
+            return True
+        except sqlite3.Error as e:
+            self.logger.error(f"移除房间连接失败: {e}")
+            return False
